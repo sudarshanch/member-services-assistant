@@ -1,0 +1,15 @@
+.DS_Store
+__pycache__/
+*.pyc
+.venv/
+venv/
+traces/
+*.log
+
+# Supplied pack. Reviewers use their own copy. Point PACK_DIR at it.
+BRIEF.md
+data/
+kb/
+mock_services/
+tools/
+eval/conversations.json
