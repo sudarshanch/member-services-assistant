@@ -8,36 +8,62 @@ The member, claims, grievance, and directory APIs stay the system of record when
 
 ## Setup
 
-Python 3.10 or newer. The standard library is enough. Run the commands below from this `solution/` directory. The task pack (mock APIs, plan documents, and `eval/conversations.json`) stays in the parent folder.
+Python 3.10 or newer. The standard library is enough. Run everything below from `solution/`.
+
+The model is selected by `solution/.env`, which the process loads on startup. Copy the example and set the key. That file is gitignored.
 
 ```bash
-export PACK_DIR="$(cd .. && pwd)"
+cd solution
+cp .env.example .env
+```
+
+`.env.example` sets `MODEL_PROVIDER=openai`, `OPENAI_BASE_URL` to Gemini's OpenAI-compatible endpoint, and `MODEL_NAME=gemini-3.8-flash`. Put the key in `OPENAI_API_KEY`. For OpenAI itself, change the base URL to `https://api.openai.com/v1` and set `MODEL_NAME` to the model you use. No extra `export` is required for those values.
+
+The member APIs are still a separate process. For this assignment they are the pack mock, and `PACK_DIR` is the parent of `solution/` (the directory that contains `kb/`, `mock_services/`, `eval/conversations.json`, and `tools/`). Start it in one terminal and leave it running:
+
+```bash
+cd solution
+export PACK_DIR="$(pwd)/.."
 export PYTHONPATH=src
 python "$PACK_DIR/mock_services/server.py" --port 8090
 ```
 
-`PACK_DIR` must contain `kb/`, `mock_services/`, `eval/conversations.json`, and `tools/`. If you omit it, the parent directory is used when it contains those folders. Do not commit the pack. The repository gitignore keeps it out.
+`MOCK_BASE_URL` defaults to `http://127.0.0.1:8090`, which matches that process. Do not commit the pack. The repository gitignore keeps it out.
 
 Optional environment:
 
 | Variable | Default | Purpose |
 |---|---|---|
 | `MOCK_BASE_URL` | `http://127.0.0.1:8090` | Member, claims, grievance, and directory base URL |
-| `MODEL_PROVIDER` | `deterministic` | `deterministic` or `openai` |
-| `MODEL_NAME` | `deterministic-policy-v1` | Sent to the OpenAI-compatible API when that provider is on |
-| `OPENAI_BASE_URL` | `https://api.openai.com/v1` | Also works for Ollama's OpenAI-compatible endpoint |
-| `OPENAI_API_KEY` | empty | Required only for `MODEL_PROVIDER=openai`. Put it in `solution/.env`, which is gitignored. See `.env.example`. |
+| `MODEL_PROVIDER` | `deterministic` when `.env` is absent. `.env.example` sets `openai` | `deterministic` or `openai` |
+| `MODEL_NAME` | `deterministic-policy-v1` in code. `.env.example` sets `gemini-3.8-flash` | Model sent to the OpenAI-compatible API |
+| `OPENAI_BASE_URL` | `https://api.openai.com/v1` in code. `.env.example` sets the Gemini endpoint | OpenAI-compatible base URL |
+| `OPENAI_API_KEY` | empty | Required when `MODEL_PROVIDER=openai`. Only in `solution/.env` |
 | `PLAN_A_TOKEN`, `PLAN_B_TOKEN`, `DIRECTORY_API_KEY` | values in the pack | Override credentials so they are not read from the pack file |
 | `MAX_STEPS`, `MAX_COST_USD`, `MAX_TURN_LATENCY_S` | `12`, `0.03`, `45` | Conversation budgets |
 
 ## Run a conversation
 
+In a second terminal, from `solution/`, with the mock still running on 8090:
+
 ```bash
+export PACK_DIR="$(pwd)/.."
+export PYTHONPATH=src
 python -m member_services.cli --tenant plan_a --member M749817 \
   --message "The member is asking what they pay for an in-network specialist visit."
 ```
 
-Omit `--message` for a multi-turn prompt. HTTP, after the mock is up:
+The CLI uses the provider in `solution/.env`. With the example file filled in, this call goes to Gemini and the gateway still reads the member from the mock. Omit `--message` for a multi-turn prompt.
+
+The evaluation gate is repeatable only on the deterministic policy. A filled-in `.env` would send the gate to the remote model. Run the gate with:
+
+```bash
+export MEMBER_SERVICES_SKIP_DOTENV=1
+export MODEL_PROVIDER=deterministic
+export MODEL_NAME=deterministic-policy-v1
+```
+
+HTTP, after the mock is up:
 
 ```bash
 python -m member_services.server --port 8088
