@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 from member_services.api_client import ApiError, IsolationError, MemberClient
 from member_services.config import Settings
 from member_services.kb import KnowledgeBase
-from member_services.phi import minimize, scrub_text
+from member_services.phi import minimize
 
 
 class PolicyDenied(RuntimeError):
@@ -269,10 +269,6 @@ def safe_tool_description(description: str) -> str:
             "Do not include member identifiers in the query."
         )
     return description
-
-
-def scrub_event_text(value: str, secrets: list[str]) -> str:
-    return scrub_text(value, secrets)
 
 
 def _public_grievance(record: dict) -> dict:

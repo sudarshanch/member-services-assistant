@@ -8,6 +8,24 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 
+def _load_dotenv() -> None:
+    """Read solution/.env into the environment. Values in that file replace placeholders."""
+    if os.environ.get("MEMBER_SERVICES_SKIP_DOTENV") == "1":
+        return
+    path = Path(__file__).resolve().parents[2] / ".env"
+    if not path.is_file():
+        return
+    for line in path.read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#") or "=" not in stripped:
+            continue
+        if stripped.startswith("export "):
+            stripped = stripped[len("export ") :].strip()
+        key, value = stripped.split("=", 1)
+        name = key.strip()
+        os.environ[name] = value.strip().strip('"').strip("'")
+
+
 def discover_pack_dir() -> Path:
     env = os.environ.get("PACK_DIR")
     if env:
@@ -58,6 +76,7 @@ class Settings:
 
 
 def load_settings(pack_dir: Path | None = None) -> Settings:
+    _load_dotenv()
     pack = Path(pack_dir).resolve() if pack_dir else discover_pack_dir()
     tenants_path = pack / "mock_services" / "data" / "tenants.json"
     if not tenants_path.exists():

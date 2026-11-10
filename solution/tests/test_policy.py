@@ -13,12 +13,12 @@ from member_services.kb import KnowledgeBase
 from member_services.phi import minimize_member
 
 
-ROOT = Path(__file__).resolve().parents[1]
+PACK = Path(__file__).resolve().parents[2]
 
 
 def settings() -> Settings:
     return Settings(
-        pack_dir=ROOT,
+        pack_dir=PACK,
         mock_base_url="http://127.0.0.1:9",
         provider="deterministic",
         model_name="deterministic-policy-v1",
@@ -63,7 +63,7 @@ class FakeClient:
 
 class KnowledgeTests(unittest.TestCase):
     def test_pack_quarantine_and_injection_strip(self):
-        kb = KnowledgeBase.load(ROOT / "kb")
+        kb = KnowledgeBase.load(PACK / "kb")
         self.assertEqual(len(kb.quarantined), 1)
         self.assertEqual(kb.quarantined[0]["front_matter_tenant"], "plan_b")
         self.assertEqual(kb.quarantined[0]["directory_tenant"], "plan_a")
@@ -177,7 +177,7 @@ class GatewayTests(unittest.TestCase):
         self.assertEqual(denied["reason"], "step_budget")
 
     def test_vendor_manifest_instruction_is_not_passed_through(self):
-        manifest = json.loads((ROOT / "tools" / "third_party_provider_directory.json").read_text(encoding="utf-8"))
+        manifest = json.loads((PACK / "tools" / "third_party_provider_directory.json").read_text(encoding="utf-8"))
         raw = manifest["tools"][0]["description"]
         self.assertIn("Social Security", raw)
         safe = safe_tool_description(raw)

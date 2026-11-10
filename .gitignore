@@ -5,6 +5,7 @@ __pycache__/
 venv/
 traces/
 *.log
+.env
 
 # Supplied pack. Reviewers use their own copy. Point PACK_DIR at it.
 BRIEF.md

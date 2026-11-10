@@ -74,7 +74,8 @@ def run(settings: Settings | None = None) -> dict:
     for case in cases["cases"]:
         rows.append(_run_case(assistant, clients, surnames, case))
     report = _summarize(rows, assistant)
-    _write(settings.pack_dir / "eval", report)
+    report_dir = Path(__file__).resolve().parents[2] / "eval"
+    _write(report_dir, report)
     return report
 
 

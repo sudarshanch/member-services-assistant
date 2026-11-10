@@ -6,15 +6,15 @@ The default brain is a deterministic policy (`deterministic-policy-v1`). It choo
 
 ## Setup
 
-Python 3.10 or newer. The standard library is enough. From this repository:
+Python 3.10 or newer. The standard library is enough. Run the commands below from this `solution/` directory. The task pack (mock APIs, plan documents, and `eval/conversations.json`) stays in the parent folder.
 
 ```bash
-export PACK_DIR=/path/to/the/task/pack
+export PACK_DIR="$(cd .. && pwd)"
 export PYTHONPATH=src
 python "$PACK_DIR/mock_services/server.py" --port 8090
 ```
 
-`PACK_DIR` must contain `kb/`, `mock_services/`, `eval/conversations.json`, and `tools/`. If you run from the pack itself, the pack is discovered and `PACK_DIR` can be omitted. Do not commit the pack. This repo gitignores it.
+`PACK_DIR` must contain `kb/`, `mock_services/`, `eval/conversations.json`, and `tools/`. If you omit it, the parent directory is used when it contains those folders. Do not commit the pack. The repository gitignore keeps it out.
 
 Optional environment:
 
@@ -24,7 +24,7 @@ Optional environment:
 | `MODEL_PROVIDER` | `deterministic` | `deterministic` or `openai` |
 | `MODEL_NAME` | `deterministic-policy-v1` | Sent to the OpenAI-compatible API when that provider is on |
 | `OPENAI_BASE_URL` | `https://api.openai.com/v1` | Also works for Ollama's OpenAI-compatible endpoint |
-| `OPENAI_API_KEY` | empty | Required only for `MODEL_PROVIDER=openai` |
+| `OPENAI_API_KEY` | empty | Required only for `MODEL_PROVIDER=openai`. Put it in `solution/.env`, which is gitignored. |
 | `PLAN_A_TOKEN`, `PLAN_B_TOKEN`, `DIRECTORY_API_KEY` | values in the pack | Override credentials so they are not read from the pack file |
 | `MAX_STEPS`, `MAX_COST_USD`, `MAX_TURN_LATENCY_S` | `12`, `0.03`, `45` | Conversation budgets |
 
@@ -50,7 +50,7 @@ python -m unittest discover -s tests
 python -m member_services.harness
 ```
 
-The harness writes `eval/last_report.md` and `eval/last_report.json` and exits non-zero when the gate fails. The gate requires governed-fact recall and behaviour accuracy of at least 0.95, a perfect score on safety behaviours, no unauthorized grievance, and no cross-tenant or SSN leak.
+The harness writes `eval/last_report.md` and `eval/last_report.json` in this directory and exits non-zero when the gate fails. The gate requires governed-fact recall and behaviour accuracy of at least 0.95, a perfect score on safety behaviours, no unauthorized grievance, and no cross-tenant or SSN leak.
 
 Last run, deterministic policy, mock clock 2026-11-15: **pass**. Behaviour 40/40, governed facts 40/40, published facts 36/40, safety 1.0, unauthorized writes 0, isolation or PHI leaks 0. The four published misses are explained in the report and in `design/DESIGN.md` (ADR-3). Matching them would quote another tenant, another plan year, another product, or the wrong claim status.
 

@@ -13,6 +13,7 @@ import json
 import re
 import time
 from datetime import date, timedelta
+from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 from member_services.gateway import Gateway, cancelled, confirmed
@@ -593,15 +594,36 @@ def _chat(settings, messages, tools) -> dict:
         "tools": tools,
         "temperature": 0,
     }
+    # The Gemini OpenAI-compatible endpoint accepts the key only as a bearer
+    # token. Adding x-goog-api-key as well makes Gemini answer "not a valid API key".
+    headers = {
+        "Authorization": f"Bearer {settings.openai_api_key}",
+        "Content-Type": "application/json",
+    }
     request = Request(
         settings.openai_base_url + "/chat/completions",
         data=json.dumps(payload).encode("utf-8"),
-        headers={
-            "Authorization": f"Bearer {settings.openai_api_key}",
-            "Content-Type": "application/json",
-        },
+        headers=headers,
         method="POST",
     )
-    with urlopen(request, timeout=60) as response:
-        body = json.loads(response.read().decode("utf-8"))
-    return body["choices"][0]["message"]
+    last_error = None
+    for attempt in range(3):
+        try:
+            with urlopen(request, timeout=60) as response:
+                body = json.loads(response.read().decode("utf-8"))
+            return body["choices"][0]["message"]
+        except HTTPError as exc:
+            detail = exc.read().decode("utf-8", errors="replace")[:500]
+            code = exc.code
+            exc.close()
+            last_error = (code, detail)
+            if code in (429, 503) and attempt < 2:
+                time.sleep(1 + attempt)
+                continue
+            if settings.openai_api_key and settings.openai_api_key in detail:
+                detail = detail.replace(settings.openai_api_key, "[redacted]")
+            raise RuntimeError(
+                f"Model request failed with HTTP {code}. Check solution/.env. {detail}"
+            ) from exc
+    code, detail = last_error
+    raise RuntimeError(f"Model request failed with HTTP {code}. {detail}")
