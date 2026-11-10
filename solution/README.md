@@ -2,7 +2,9 @@
 
 Governed assistant for member-services representatives. A conversation is one tenant and one member. Tool calls go through a gateway that enforces tenant isolation, minimum necessary PHI, confirmation before a grievance write, and a per-conversation budget. Plan documents are retrieved only when the file's directory and its front matter name the same tenant.
 
-The default brain is a deterministic policy (`deterministic-policy-v1`). It chooses tools and answers from tool results. Set `MODEL_PROVIDER=openai` to use any OpenAI-compatible tool-calling API instead. The gateway is the same either way. The evaluation gate was run with the deterministic policy and no remote model, which is what keeps a conversation inside the $0.03 cost cap and makes the run repeatable.
+The default brain is a deterministic policy (`deterministic-policy-v1`). It chooses tools and answers from tool results. Set `MODEL_PROVIDER=openai` to use any OpenAI-compatible tool-calling API instead, including Gemini. The gateway is the same either way: the model may only request a tool, and the gateway decides whether that call is allowed. The evaluation gate was run with the deterministic policy and no remote model, which is what keeps a conversation inside the $0.03 cost cap and makes the run repeatable.
+
+The member, claims, grievance, and directory APIs stay the system of record when a real model is on. For this assignment those APIs are the supplied mock. The model does not replace them. Copy `solution/.env.example` to `solution/.env`, set `OPENAI_API_KEY`, and leave the mock running at `MOCK_BASE_URL`. Do not commit `.env`.
 
 ## Setup
 
@@ -24,7 +26,7 @@ Optional environment:
 | `MODEL_PROVIDER` | `deterministic` | `deterministic` or `openai` |
 | `MODEL_NAME` | `deterministic-policy-v1` | Sent to the OpenAI-compatible API when that provider is on |
 | `OPENAI_BASE_URL` | `https://api.openai.com/v1` | Also works for Ollama's OpenAI-compatible endpoint |
-| `OPENAI_API_KEY` | empty | Required only for `MODEL_PROVIDER=openai`. Put it in `solution/.env`, which is gitignored. |
+| `OPENAI_API_KEY` | empty | Required only for `MODEL_PROVIDER=openai`. Put it in `solution/.env`, which is gitignored. See `.env.example`. |
 | `PLAN_A_TOKEN`, `PLAN_B_TOKEN`, `DIRECTORY_API_KEY` | values in the pack | Override credentials so they are not read from the pack file |
 | `MAX_STEPS`, `MAX_COST_USD`, `MAX_TURN_LATENCY_S` | `12`, `0.03`, `45` | Conversation budgets |
 
